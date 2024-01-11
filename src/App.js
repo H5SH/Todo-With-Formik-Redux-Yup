@@ -1,9 +1,10 @@
 import { React,useState } from 'react'
-import { Formik, Form, Field } from 'formik'
+import { Formik, Form, Field, ErrorMessage } from 'formik'
 import {object, string, date} from 'yup'
 import './App.css'
 import todosStore from './Redux/todoReducer'
 import { addTodo, deleteTodo } from './Redux/todoReducer'
+import pad from './pad'
 
 
 function App() {
@@ -22,62 +23,48 @@ function App() {
     date: date().default()
   })
 
-  console.log(todosStore.getState())
-
   function del(todo){
     todosStore.dispatch(deleteTodo(todo))
     setRefresh(!refresh)
   }
+
+  let count = 0
+  const dat = new Date()
 
   return (
     <>
       <div>
         <h3>ADD New Todo</h3>
         <Formik
-        initialValues={{title: '', work: '', date: ''}}
+        initialValues={{title: '', work: '', date: `${dat.getFullYear()}-${pad(dat.getMonth() + 1)}-${pad(dat.getDate())}`}}
         validationSchema={todoSchema}
-        onSubmit={values => {
+        onSubmit={(values, {resetForm}) => {
           todosStore.dispatch(addTodo(values))
+          resetForm()
           setRefresh(!refresh)
         }}
         >
           {({errors, touched})=> (
             <Form>
               <Field name='title' />
-              {errors.title && touched.title ? (
-                <div>{errors.title}</div>
-              ): <div>Required</div>}
+              <ErrorMessage name='title' />
               <Field name="work" />
-              {errors.work && touched.work ? (
-                <div>{errors.work}</div>
-              ):<div>Required</div>}
+              <ErrorMessage name='work' />
               <Field type="date" name="date" />
-              {errors.date && touched.work ? (
-                <div>{errors.date}</div>
-              ):null}
+              <ErrorMessage name='submit' />
               <button type='submit'>Submit</button>
             </Form>
           )}
         </Formik>
         <h3>Works Todo</h3>
-        {refresh ? <div>
-         {todosStore.getState().todos.map(todo => (
-          <div>
-            <h4>{todo.payload.title}</h4>
-            <h5>{todo.payload.work}</h5>
-            <h5>{todo.payload.date}</h5>
-            <button onClick={()=> del(todo.payload)}>Delete</button>
-            </div>
-        ))}</div>:<div>
         {todosStore.getState().todos.map(todo => (
-          <div>
+          <div key={++count}>
             <h4>{todo.payload.title}</h4>
             <h5>{todo.payload.work}</h5>
             <h5>{todo.payload.date}</h5>
             <button onClick={()=> del(todo.payload)}>Delete</button>
             </div>
-        ))}</div>
-}
+        ))}
       </div>
     </>
   )
